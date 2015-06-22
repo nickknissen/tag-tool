@@ -1,12 +1,5 @@
-# coding: utf8
-"""
-TODO:
-* Clean up and reuse code
-* Use a file to instead of template to easier customization.
-* Use Request instead of CURL to make it platform platform agnostic.
-* get_merges_into_master_after -> get_merges_into_current_branch_after.
-* Config file for input and output format for tagname.
-"""
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 import click
 import json
 import subprocess
@@ -17,10 +10,6 @@ import tempfile
 RALLY_ITERATIONS_LIST_URL = ("https://rally1.rallydev.com/slm/webservice/v3.0/"
                              "iteration\?query\=\&"
                              "order\=EndDate%20desc\&start\=1\&pagesize\=1")
-
-
-class EnvironmentVariableError(Exception):
-    pass
 
 
 class ExecutionError(RuntimeError):
@@ -51,12 +40,13 @@ def execute(cmd, workdir=None, can_fail=True, log=False):
     if proc.returncode and can_fail:
         raise ExecutionError("Failed to execute command: ".format(cmd),
                              stdout=out, stderr=err)
-    return out, err, proc.returncode
+    return out.decode('utf8'), err.decode('utf8'), proc.returncode
 
 
 def get_lastest_git_tag():
     cmd = "git log --tags --simplify-by-decoration --pretty='format:%d'"
     stdout, stderr, rc = execute(cmd)
+
     return stdout.splitlines()[0].strip()[1:-1].split(": ")[1]
 
 
@@ -102,7 +92,7 @@ def get_merges_into_master_after(latest_tag_date):
     merges_raw, sterr, r_code = execute(cmd)
     merges_raw = merges_raw.strip()
 
-    p = re.compile(ur'(branch \')(?<=\')(.*?)(?=\')')
+    p = re.compile(r"(branch \')(?<=\')(.*?)(?=\')")
     merges = re.findall(p, merges_raw)
 
     return [merge[1] for merge in merges]
@@ -208,7 +198,3 @@ def cli(rally_user, rally_pass):
         ):
             execute("git tag -a {} -F {}".format(tagname, temp.name))
             execute("git push --tags")
-
-
-if __name__ == "__main__":
-    cli()
