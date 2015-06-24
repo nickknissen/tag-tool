@@ -48,13 +48,14 @@ def execute(cmd, workdir=None, can_fail=True, log=False):
 def get_lastest_git_tag():
     cmd = "git log --tags --simplify-by-decoration --pretty='format:%d'"
     stdout, stderr, rc = execute(cmd)
+    try:
+        return stdout.splitlines()[0].strip()[1:-1].split(": ")[1]
+    except IndexError:
+        return None
 
-    return stdout.splitlines()[0].strip()[1:-1].split(": ")[1]
 
-
-def get_current_version():
+def get_current_version(lastest_git_tag):
     """ lastest_git_tag format: "sprint-56.2.0-remove-beta-logos"."""
-    lastest_git_tag = get_lastest_git_tag()
 
     return lastest_git_tag.split("-")[1]
 
@@ -106,9 +107,9 @@ def get_merges_into_master_after(latest_tag_date):
     return [merge[1] for merge in merges]
 
 
-def is_new_sprint(current_sprint_name):
+def is_new_sprint(current_sprint_name, lastest_git_tag):
     sprint_number = get_sprint_number(current_sprint_name)
-    current_version = get_current_version()
+    current_version = get_current_version(lastest_git_tag)
     return current_version.split(".")[0] != sprint_number
 
 
@@ -154,7 +155,14 @@ def generate_tagging_message(sprint_number, latest_tag_date):
 @click.command()
 def cli(rally_user, rally_pass):
     lastest_git_tag = get_lastest_git_tag()
-    current_version = get_current_version()
+
+    if lastest_git_tag is None:
+        click.secho(("Can't calculate current version when no previous "
+                     "tags is created"),
+                    bg="red", fg="white")
+        raise click.Abort()
+
+    current_version = get_current_version(lastest_git_tag)
 
     click.echo("Current release: {}".format(style_green(lastest_git_tag)))
 
@@ -170,7 +178,7 @@ def cli(rally_user, rally_pass):
 
     click.echo("Current sprint number: {}".format(style_green(sprint_number)))
 
-    if is_new_sprint(current_sprint_name):
+    if is_new_sprint(current_sprint_name, lastest_git_tag):
         click.echo("New sprint has started")
         new_version = genereate_new_sprint_version(current_version)
     else:
