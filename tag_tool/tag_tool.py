@@ -84,19 +84,19 @@ def get_current_sprint_name(rally_user, rally_password):
 
 
 def get_latest_release_tag_date():
-    cmd = ("git log --tags='sprint-*' --format='%ci'")
+    cmd = ("git log --tags='sprint-*' --format='%ci' --simplify-by-decoration")
     tag_dates, sterr, r_code = execute(cmd)
-    return tag_dates.splitlines()[1]
+    return tag_dates.splitlines()[0]
 
 
 def get_time_after_latest_tag_date(latest_tag_date):
     new_date = arrow.get(latest_tag_date, GIT_DATE_FORMAT).replace(
-        minutes=+4)
+        minutes=+1)
     return new_date.format(GIT_DATE_FORMAT)
 
 
 def get_merges_into_master_after(latest_tag_date):
-    cmd = "git log --merges --format='%s' --after='{}'".format(
+    cmd = "git log --merges --format='%s' --since='{}'".format(
         get_time_after_latest_tag_date(latest_tag_date))
     merges_raw, sterr, r_code = execute(cmd)
     merges_raw = merges_raw.strip()
