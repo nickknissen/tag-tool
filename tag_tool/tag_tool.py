@@ -46,7 +46,10 @@ def execute(cmd, workdir=None, can_fail=True, log=False):
 
 
 def get_lastest_git_tag():
-    cmd = "git log --tags --simplify-by-decoration --pretty='format:%d'"
+    cmd = ("git log "
+           "--tags='sprint-*' "
+           "--simplify-by-decoration "
+           "--pretty='format:%d'")
     stdout, stderr, rc = execute(cmd)
     try:
         return stdout.splitlines()[0].strip()[1:-1].split(": ")[1]
