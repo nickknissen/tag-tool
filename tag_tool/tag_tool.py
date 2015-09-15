@@ -181,6 +181,11 @@ def cli(rally_user, rally_pass):
 
     click.echo("Current sprint number: {}".format(style_green(sprint_number)))
 
+    latest_tag_date = get_latest_release_tag_date()
+    git_message = generate_tagging_message(sprint_number, latest_tag_date)
+    click.secho("Following message with be used as git tagging message:")
+    click.secho(git_message, fg='yellow')
+
     if is_new_sprint(current_sprint_name, lastest_git_tag):
         click.echo("New sprint has started")
         new_version = genereate_new_sprint_version(current_version)
@@ -199,14 +204,7 @@ def cli(rally_user, rally_pass):
         type=unicode)
 
     tagname = genereate_new_tag_name(new_version, tag_title)
-
     click.echo("That tag will be named: {}".format(style_green(tagname)))
-
-    latest_tag_date = get_latest_release_tag_date()
-
-    git_message = generate_tagging_message(sprint_number, latest_tag_date)
-    click.secho("Following message with be used as git tagging message:")
-    click.secho(git_message, fg='yellow')
 
     with tempfile.NamedTemporaryFile() as temp:
         temp.write(git_message)
